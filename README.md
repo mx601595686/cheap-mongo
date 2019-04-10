@@ -1,3 +1,2 @@
-# my-typescript-template
-我的typescript项目模板。
-这套模板主要是针对nodejs程序的开发。
+# cheap-db
+一款低性能数据库，目的是降低数据库存储成本将数据保存在Amazon S3等廉价存储服务之上

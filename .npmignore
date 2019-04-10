@@ -1,7 +1,0 @@
-.vscode/
-test/
-src/
-!bin/
-README.md
-gulpfile.js
-tsconfig.json

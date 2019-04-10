@@ -1,44 +1,32 @@
 {
-    "name": "my-typescript-template",
+    "name": "cheap-db",
     "version": "0.0.1",
-    "description": "我的typescript项目模板",
+    "description": "一款低性能数据库，目的是压低数据库存储成本将数据保存在Amazon S3等廉价存储服务之上",
     "main": "./bin/index.js",
-    "types": "./bin/index.d.ts",
+    "private": true,
     "scripts": {
-        "test": "mocha --require ts-node/register ./test/index.test.ts",
         "compile": "gulp compile"
     },
-    "keywords": [
-        "typescript",
-        "template"
-    ],
     "author": "wujingtao",
     "license": "MIT",
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/mx601595686/my-typescript-template.git"
+        "url": "git+https://github.com/mx601595686/cheap-db.git"
     },
     "bugs": {
-        "url": "https://github.com/mx601595686/my-typescript-template/issues"
+        "url": "https://github.com/mx601595686/cheap-db/issues"
     },
-    "homepage": "https://github.com/mx601595686/my-typescript-template#readme",
+    "homepage": "https://github.com/mx601595686/cheap-db#readme",
     "devDependencies": {
         "@types/component-emitter": "^1.2.8",
-        "@types/expect.js": "^0.3.29",
-        "@types/lodash": "^4.14.123",
-        "@types/mocha": "^5.2.6",
         "@types/node": "^11.12.2",
-        "expect.js": "^0.3.1",
         "gulp": "^4.0.0",
         "gulp-sourcemaps": "^2.6.5",
         "gulp-typescript": "^5.0.1",
-        "mocha": "^6.0.2",
-        "ts-node": "^8.0.3",
         "typescript": "^3.4.1"
     },
     "dependencies": {
-        "component-emitter": "^1.2.1",
-        "lodash": "^4.17.11",
-        "log-formatter": "^1.0.5"
+        "log-formatter": "^1.0.5",
+        "service-starter": "^1.1.2"
     }
 }
