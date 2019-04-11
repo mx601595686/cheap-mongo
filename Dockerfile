@@ -69,7 +69,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     tzdata \
     && rm -rf /var/lib/apt/lists/*
 
-#VOLUME "/var/lib/mongodb"
+VOLUME "/var/lib/mongodb"
 
 WORKDIR /app
 
@@ -77,7 +77,7 @@ WORKDIR /app
 COPY ["src", "/app/src/"]
 COPY ["package.json", "gulpfile.js", "tsconfig.json", "LICENSE", "/app/"]
 COPY [".bashrc", "/root/.bashrc"]
-# COPY ["mongod.conf", "/etc/mongod.conf"]
+COPY ["mongod.conf", "/etc/mongod.conf"]
 
 # 编译
 RUN npm install && \ 

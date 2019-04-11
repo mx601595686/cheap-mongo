@@ -1,1 +1,1 @@
-console.log('hello world');
+import * as alias from 'mongodb';

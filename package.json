@@ -1,7 +1,7 @@
 {
     "name": "cheap-db",
     "version": "0.0.1",
-    "description": "一款低性能数据库，目的是压低数据库存储成本将数据保存在Amazon S3等廉价存储服务之上",
+    "description": "一款低性能数据库，目的是降低数据库存储成本将数据保存在Amazon S3等廉价存储服务之上",
     "main": "./bin/index.js",
     "private": true,
     "scripts": {
@@ -19,13 +19,26 @@
     "homepage": "https://github.com/mx601595686/cheap-db#readme",
     "devDependencies": {
         "@types/component-emitter": "^1.2.8",
+        "@types/mongodb": "^3.1.22",
         "@types/node": "^11.12.2",
+        "@types/koa": "^2.0.48",
+        "@types/koa-compose": "^3.2.3",
+        "@types/koa-router": "^7.0.40",
         "gulp": "^4.0.0",
         "gulp-typescript": "^5.0.1",
         "typescript": "^3.4.1"
     },
     "dependencies": {
+        "diskusage": "^1.0.0",
+        "koa": "^2.7.0",
+        "koa-body": "^4.1.0",
+        "koa-compress": "^3.0.0",
+        "koa-router": "^7.4.0",
+        "moment": "^2.24.0",
+        "bson-ext": "^2.0.2",
+        "kerberos": "^1.1.2",
         "log-formatter": "^1.0.5",
+        "mongodb": "^3.2.3",
         "service-starter": "^1.1.2"
     }
 }
