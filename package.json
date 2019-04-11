@@ -21,7 +21,6 @@
         "@types/component-emitter": "^1.2.8",
         "@types/node": "^11.12.2",
         "gulp": "^4.0.0",
-        "gulp-sourcemaps": "^2.6.5",
         "gulp-typescript": "^5.0.1",
         "typescript": "^3.4.1"
     },

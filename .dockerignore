@@ -1,0 +1,8 @@
+*
+!src
+!gulpfile.js
+!package.json
+!tsconfig.json
+!.bashrc
+!mongod.conf
+!LICENSE
