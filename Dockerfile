@@ -60,7 +60,7 @@ RUN set -ex; \
 # 当前node镜像所使用的Debian版本
 # Mongodb的主版本号
 ENV DEBIAN_VERSION=stretch MONGO_VERSION=4.0
-RUN echo "deb http://repo.mongodb.org/apt/debian ${DEBIAN_VERSION}/mongodb-org/${MONGO_VERSION} main" | sudo tee /etc/apt/sources.list.d/mongodb-org-${MONGO_VERSION}.list
+RUN echo "deb http://repo.mongodb.org/apt/debian ${DEBIAN_VERSION}/mongodb-org/${MONGO_VERSION} main" | tee /etc/apt/sources.list.d/mongodb-org-${MONGO_VERSION}.list
 
 # 接下来是我的配置项目
 RUN apt-get update && apt-get install -y --no-install-recommends \
