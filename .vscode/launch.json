@@ -6,18 +6,23 @@
     "configurations": [
         {
             "type": "node",
-            "request": "launch",
-            "name": "测试调试",
-            "program": "${workspaceRoot}/node_modules/mocha/bin/_mocha",
-            "args": [
-                "--timeout",
-                "999999",
-                "--colors",
-                "--require",
-                "ts-node/register",
-                "${workspaceRoot}/test/index.test.ts"
-            ],
-            "internalConsoleOptions": "openOnSessionStart"
+            "request": "attach",
+            "name": "容器中调试",
+            "address": "192.168.232.190",
+            "port": 9229,
+            "localRoot": "${workspaceFolder}",
+            "remoteRoot": "/app"
+            
+            /**
+            * 参考Docker命令。
+            * 
+            * docker run --rm -it --name cheap-db -p 80:80 -p 9229:9229 -p 27017:27017 \
+            * -v $(pwd)/bin:/app/bin \
+            * -v $(pwd)/mongod.conf:/etc/mongod.conf \
+            * -v $(pwd)/db/dbData:/var/lib/mongodb \ # 在windows下不能挂载这个
+            * -v $(pwd)/db/fileData:/var/lib/cheapdb/files \
+            * cheap-db:latest node --inspect-brk=0.0.0.0:9229 .
+            */
         }
     ]
 }

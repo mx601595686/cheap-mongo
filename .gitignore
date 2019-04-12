@@ -63,3 +63,8 @@ typings/
 
 # 编译后的代码不上传至Github
 bin/
+
+.vscode/settings.json
+
+# docker测试所存放的临时文件
+db
