@@ -28,7 +28,7 @@ export class HttpServer extends BaseServiceModule {
             let aggregation;
             if (ctx.request.body.aggregation) {
                 aggregation = JSON.parse(ctx.request.body.aggregation);
-                if (!Array.isArray(aggregation)) throw new Error('aggregation 必须是一个数组')
+                if (!Array.isArray(aggregation)) throw new Error('aggregation 必须是一个数组');
             }
 
             ctx.body = await this._logicController.get(ctx.request.body.key, aggregation);
@@ -38,14 +38,8 @@ export class HttpServer extends BaseServiceModule {
             if (!ctx.request.body.key) throw new Error('key 不可以为空');
 
             const doc = JSON.parse(ctx.request.body.doc);
-            if (_.isEmpty(doc)) throw new Error('更新文档不可以为空');
             if (!_.isPlainObject(doc)) throw new Error('更新文档必须是一个对象');
             return this._logicController.update(ctx.request.body.key, doc);
-        });
-
-        this._koaRouter.post('/delete', ctx => {
-            if (!ctx.request.body.key) throw new Error('key 不可以为空');
-            return this._logicController.delete(ctx.request.body.key);
         });
 
         this._koaRouter.post('/delete', ctx => {
@@ -69,7 +63,7 @@ export class HttpServer extends BaseServiceModule {
 
             this._koaServer.use(koaBody({
                 json: false,
-                jsonLimit: 1,
+                jsonLimit: 1, //不能设置为0，否则无效
                 text: false,
                 textLimit: 1,
                 formLimit: '17mb',

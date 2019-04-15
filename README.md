@@ -4,17 +4,17 @@
 ### 环境变量
 * `TZ`：时区，默认 `Asia/Shanghai` (上海)
 * `DBNAME`：数据库名称，默认 `default`
-* `SYNC_CRONTAB`：缓存数据同步时间间隔，默认 `*/10 * * * *` ( 每隔10分钟)
-* `MAX_CACHE_SIZE`：缓存最大大小，最小128MB
+* `CACHE_SYNC_CRONTAB`：缓存数据同步时间间隔，默认 `*/10 * * * *` (每隔10分钟)
+* `MAX_CACHE_SIZE`：缓存最大大小(bytes)，默认硬盘总容量的80%，最小128MB
 * `STORAGE`：存储引擎名称
     * `local`：本地文件存储，数据保存在 `/var/lib/cheapdb`。该存储引擎主要是给测试使用的，生成环境中请不要使用。
     * `xxx`：
 
 ### VOLUME
-* `/var/lib/mongodb`：缓存存放目录。请妥善保存缓存，避免缓存没有同步而导致某些数据丢失。
+* `/var/lib/mongodb`：缓存数据存放目录。请妥善保管缓存，避免因为缓存没有同步而导致某些数据丢失的情况。
 
 ### API
-> 接口调用格式：HTTP POST application/x-www-form-urlencoded
+> 接口调用方法：HTTP POST application/x-www-form-urlencoded
 
 * `/set`：设置或覆盖数据
     * `key`：键名

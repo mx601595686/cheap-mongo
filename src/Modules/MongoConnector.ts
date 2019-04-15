@@ -24,7 +24,7 @@ export class MongoConnector extends BaseServiceModule {
         //建立连接
         await retryUntil(async () => {
             this._mongoConnection = await mongodb.connect('mongodb://%2Ftmp%2Fmongodb-27017.sock', { autoReconnect: true, useNewUrlParser: true });
-        }, 2000, 5);
+        }, 2000, 3);
 
         //创建db
         if (!process.env.DBNAME)
@@ -47,7 +47,7 @@ export class MongoConnector extends BaseServiceModule {
                             },
                             updateTime: {
                                 bsonType: 'date',
-                                description: '上次发生变化的时间。可能的情况有：从文件存储引擎读取到数据库，数据被更新或删除'
+                                description: '上次发生变化的时间。可能的情况有：从存储引擎读取到数据库，数据被更新或删除'
                             },
                             syncType: {
                                 bsonType: 'string',

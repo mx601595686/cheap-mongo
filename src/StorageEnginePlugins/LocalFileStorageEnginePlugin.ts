@@ -15,7 +15,7 @@ export = class LocalFileStorageEnginePlugin implements BaseStorageEnginePlugin {
     get name() { return 'local' }
 
     async getConnection(dbName: string): Promise<BaseStorageEngineConnection> {
-        log.warn.location.yellow.text.yellow('warning', "存储引擎'local'只是在测试时使用的，生成环境中请不要使用");
+        log.warn.location.yellow.text.yellow('warning', "存储引擎'local'只是在测试时使用，生成环境中请不要使用");
 
         const dbPath = nodePath.join(LocalFileStorageEnginePlugin._dbPath, dbName);
         await fs.ensureDir(dbPath);

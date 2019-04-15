@@ -29,15 +29,15 @@ export class LogicController extends BaseServiceModule {
         this._mongoCollection = (this.services.MongoConnector as MongoConnector).collection;
         this._storageConnection = (this.services.StorageEngineConnector as StorageEngineConnector).connection;
 
-        if (!process.env.SYNC_CRONTAB)
-            throw new Error('没有设置同步数据定时器 [环境变量 SYNC_CRONTAB]');
-        this._syncTimer = schedule.scheduleJob(process.env.SYNC_CRONTAB, this._syncData.bind(this));
+        if (!process.env.CACHE_SYNC_CRONTAB)
+            throw new Error('没有设置缓存数据同步定时器 [环境变量 CACHE_SYNC_CRONTAB]');
+        this._syncTimer = schedule.scheduleJob(process.env.CACHE_SYNC_CRONTAB, this._syncData.bind(this));
 
-        if (!!process.env.MAX_CACHE_SIZE && /^\d+&/.test(process.env.MAX_CACHE_SIZE))
+        if (!!process.env.MAX_CACHE_SIZE && /^\d+$/.test(process.env.MAX_CACHE_SIZE))
             this._maxCacheSize = Math.max(+process.env.MAX_CACHE_SIZE, 128 * 1024 * 1024);
         else {
             const status = await this._mongoDb.stats();
-            this._maxCacheSize = Math.trunc(status.fsTotalSize * 0.9);
+            this._maxCacheSize = Math.trunc(status.fsTotalSize * 0.8);
         }
 
         this._cleanTimer = setInterval(this._cleanCache.bind(this), 1 * 60 * 1000);
@@ -86,7 +86,7 @@ export class LogicController extends BaseServiceModule {
                     log.text.green('清理缓存完成');
                 }
             } catch (error) {
-                log.error.red.content.red('清理数据库缓存异常：', error);
+                log.error.red.content.red('清理mongo缓存异常：', error);
             } finally {
                 this._isCleaning = false;
             }
@@ -111,10 +111,10 @@ export class LogicController extends BaseServiceModule {
                                 await this._storageConnection.set(item._id, result.value.data);
                             } catch (error) {
                                 try {
-                                    //保存失败把数据重新保存到mongo
+                                    //把保存失败的数据重新保存到mongo
                                     await retryUntil(() => this._mongoCollection.updateOne({ _id: item._id, syncType: null }, { $set: { syncType: 'update', data: result.value.data } }), 2000, 3);
                                 } catch (error) {
-                                    log.error.location.red.text.red.content.content.red('恢复失败', '无法将保存到存储引擎失败的数据恢复到Mongo', result.value, error);
+                                    log.error.location.red.text.red.content.content.red('恢复失败', '无法将保存失败的数据重新保存到mongo', result.value, error);
                                 }
 
                                 throw error;
@@ -198,7 +198,7 @@ export class LogicController extends BaseServiceModule {
      * 删除数据
      */
     async delete(key: string): Promise<void> {
-        await this._mongoCollection.updateOne({ _id: key }, {
+        await this._mongoCollection.updateOne({ _id: key, syncType: { $ne: 'delete' } }, {
             $set: { updateTime: new Date, syncType: 'delete', hasData: false },
             $unset: { data: "" }
         });

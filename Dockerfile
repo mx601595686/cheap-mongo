@@ -58,8 +58,10 @@ RUN set -ex; \
 	apt-key list
 
 # 当前node镜像所使用的Debian版本
+ENV DEBIAN_VERSION stretch
 # Mongodb的主版本号
-ENV DEBIAN_VERSION=stretch MONGO_VERSION=4.0
+ENV MONGO_VERSION 4.0
+
 RUN echo "deb http://repo.mongodb.org/apt/debian ${DEBIAN_VERSION}/mongodb-org/${MONGO_VERSION} main" | tee /etc/apt/sources.list.d/mongodb-org-${MONGO_VERSION}.list
 
 # 接下来是我的配置项目
@@ -108,9 +110,9 @@ HEALTHCHECK \
     CMD /app/node_modules/service-starter/src/Docker/health_check.sh
 
 # 默认数据库名称
-ENV DBNAME "defualt"
-# 数据同步时间间隔，默认每10分钟
-ENV SYNC_CRONTAB "*/10 * * * *"
+ENV DBNAME defualt
+# 缓存数据同步时间间隔，默认每10分钟
+ENV CACHE_SYNC_CRONTAB "*/10 * * * *"
 
 EXPOSE 80
 

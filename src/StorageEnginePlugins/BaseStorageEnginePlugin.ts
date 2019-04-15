@@ -32,7 +32,7 @@ export interface BaseStorageEngineConnection {
 
     /**
      * 保存数据
-     * @param data 要保存的数据，数据必须是可序列化的
+     * @param data 要保存的数据。必须是可序列化的json数据
      */
     set(path: string, data: any): Promise<void>;
 
