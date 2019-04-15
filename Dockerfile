@@ -69,7 +69,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     tzdata \
     && rm -rf /var/lib/apt/lists/*
 
-VOLUME "/var/lib/mongodb"
+# TZ：时区默认是上海
+ENV TZ=Asia/Shanghai
 
 WORKDIR /app
 
@@ -78,6 +79,8 @@ COPY ["src", "/app/src/"]
 COPY ["package.json", "gulpfile.js", "tsconfig.json", "LICENSE", "/app/"]
 COPY [".bashrc", "/root/.bashrc"]
 COPY ["mongod.conf", "/etc/mongod.conf"]
+
+VOLUME "/var/lib/mongodb"
 
 # 编译
 RUN npm install && \ 
@@ -104,8 +107,10 @@ HEALTHCHECK \
     # 调用程序所暴露出的健康检查接口(要使用绝对路径)
     CMD /app/node_modules/service-starter/src/Docker/health_check.sh
 
-# TZ：时区默认是上海
-ENV TZ=Asia/Shanghai
+# 默认数据库名称
+ENV DBNAME "defualt"
+# 数据同步时间间隔，默认每10分钟
+ENV SYNC_CRONTAB "*/10 * * * *"
 
 EXPOSE 80
 

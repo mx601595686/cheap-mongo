@@ -19,8 +19,9 @@
             * docker run --rm -it --name cheap-db -p 80:80 -p 9229:9229 -p 27017:27017 \
             * -v $(pwd)/bin:/app/bin \
             * -v $(pwd)/mongod.conf:/etc/mongod.conf \
-            * -v $(pwd)/db/dbData:/var/lib/mongodb \ # 在windows下不能挂载这个
-            * -v $(pwd)/db/fileData:/var/lib/cheapdb/files \
+            * -v $(pwd)/db/mongoData:/var/lib/mongodb \ # 在windows下不能挂载这个
+            * -v $(pwd)/db/mongoLog:/var/log/mongodb \
+            * -v $(pwd)/db/fileData:/var/lib/cheapdb \
             * cheap-db:latest node --inspect-brk=0.0.0.0:9229 .
             */
         }
