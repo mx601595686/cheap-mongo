@@ -33,7 +33,7 @@ export class LogicController extends BaseServiceModule {
             throw new Error('没有设置缓存数据同步定时器 [环境变量 CACHE_SYNC_CRONTAB]');
         this._syncTimer = schedule.scheduleJob(process.env.CACHE_SYNC_CRONTAB, this._syncData.bind(this));
 
-        if (!!process.env.MAX_CACHE_SIZE && /^\d+$/.test(process.env.MAX_CACHE_SIZE))
+        if (process.env.MAX_CACHE_SIZE && /^\d+$/.test(process.env.MAX_CACHE_SIZE))
             this._maxCacheSize = Math.max(+process.env.MAX_CACHE_SIZE, 128 * 1024 * 1024);
         else {
             const status = await this._mongoDb.stats();
@@ -45,8 +45,8 @@ export class LogicController extends BaseServiceModule {
 
     onStop(): Promise<void> {
         return new Promise(resolve => {
-            this._syncTimer.cancel();
             clearInterval(this._cleanTimer);
+            this._syncTimer.cancel();
 
             //等待同步或清理执行完成
             const timer = setInterval(() => {
@@ -88,7 +88,7 @@ export class LogicController extends BaseServiceModule {
                     log.text.green('清理缓存完成');
                 }
             } catch (error) {
-                log.error.red.content.red('清理mongo缓存异常：', error);
+                log.error.red.content.red('清理缓存异常：', error);
             } finally {
                 this._isCleaning = false;
             }
@@ -113,10 +113,10 @@ export class LogicController extends BaseServiceModule {
                                 await this._storageConnection.set(item._id, result.value.data);
                             } catch (error) {
                                 try {
-                                    //把保存失败的数据重新保存到mongo
+                                    //把保存失败的数据重新恢复到mongo
                                     await retryUntil(() => this._mongoCollection.updateOne({ _id: item._id, syncType: null }, { $set: { syncType: 'update', data: result.value.data } }), 2000, 3);
                                 } catch (error) {
-                                    log.error.location.red.text.red.content.content.red('恢复失败', '无法将保存失败的数据重新保存到mongo', result.value, error);
+                                    log.error.location.red.text.red.content.content.red('恢复失败', '无法将保存失败的数据重新恢复到mongo', result.value, error);
                                 }
 
                                 throw error;

@@ -73,7 +73,7 @@ export class HttpServer extends BaseServiceModule {
             this._koaServer.use(async (ctx, next) => {
                 try {
                     await next();
-                    if (ctx.body === undefined) ctx.body = 'ok';
+                    if (ctx.body === undefined && ctx.request.method === 'POST') ctx.body = 'ok';
                 } catch (err) {
                     ctx.status = err.statusCode || err.status || 400;
                     ctx.body = err.message;

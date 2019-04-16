@@ -17,7 +17,7 @@
 > 接口调用方法：HTTP POST application/x-www-form-urlencoded
 
 * `/set`：设置或覆盖数据
-    * `key`：键名
+    * `key`：键名。注意：如果使用的是文件存储引擎，则key不应当包含文件系统不允许的特殊字符
     * `value`：值。注意：value 必须是可序列化的 json 数据
 * `/get`：获取数据。没有数据会抛出异常
     * `key`：键名
