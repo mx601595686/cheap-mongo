@@ -76,12 +76,14 @@ export class LogicController extends BaseServiceModule {
                         projection: { _id: 1 }
                     }).toArray();
 
-                    await this._mongoCollection.bulkWrite(deleteItems.map(item => ({
-                        updateOne: {
-                            filter: { _id: item._id, syncType: null },
-                            update: { $set: { hasData: false }, $unset: { data: "" } }
-                        }
-                    })));
+                    if (deleteItems.length > 0) {
+                        await this._mongoCollection.bulkWrite(deleteItems.map(item => ({
+                            updateOne: {
+                                filter: { _id: item._id, syncType: null },
+                                update: { $set: { hasData: false }, $unset: { data: "" } }
+                            }
+                        })));
+                    }
 
                     log.text.green('清理缓存完成');
                 }
@@ -148,7 +150,9 @@ export class LogicController extends BaseServiceModule {
      * @param aggregation [mongo的聚合方法](https://docs.mongodb.com/manual/reference/aggregation/)
      */
     async get(key: string, aggregation?: any[]): Promise<any[]> {
-        if (aggregation && '$out' in aggregation[aggregation.length - 1])
+        const hasAggregation = aggregation != null && aggregation.length > 0;
+
+        if (hasAggregation && '$out' in (aggregation as any)[(aggregation as any).length - 1])
             throw new Error("聚合不允许使用 '$out' stage");
 
         const isExist = await this._mongoCollection.findOne({ _id: key, syncType: { $ne: 'delete' } }, { projection: { hasData: 1, _id: 0 } });
@@ -157,8 +161,8 @@ export class LogicController extends BaseServiceModule {
             throw new Error(`没有找到对应的数据。[key: ${key}]`);
         else if (!isExist.hasData) { //如果数据库中没有缓存就从存储引擎中读取
             const data = await this._storageConnection.get(key);
-            await this._mongoCollection.replaceOne({ _id: key, syncType: null }, { updateTime: new Date, hasData: true, data });
-            if (!aggregation) return [data];   //如果没有聚合操作就直接返回
+            await this._mongoCollection.replaceOne({ _id: key, syncType: null }, { updateTime: new Date, syncType: null, hasData: true, data });
+            if (!hasAggregation) return [data];   //如果没有聚合操作就直接返回
         }
 
         //执行聚合查询操作
@@ -166,7 +170,7 @@ export class LogicController extends BaseServiceModule {
             { $match: { _id: key } },
             { $replaceRoot: { newRoot: "$data" } },
         ];
-        if (aggregation) pipeline.push(...aggregation);
+        if (hasAggregation) pipeline.push(...(aggregation as any));
         return this._mongoCollection.aggregate(pipeline).toArray();
     }
 
@@ -183,7 +187,7 @@ export class LogicController extends BaseServiceModule {
             throw new Error(`没有找到对应的数据。[key: ${key}]`);
         else if (!isExist.hasData) { //如果数据库中没有缓存就从存储引擎中读取
             const data = await this._storageConnection.get(key);
-            await this._mongoCollection.replaceOne({ _id: key, syncType: null }, { updateTime: new Date, hasData: true, data });
+            await this._mongoCollection.replaceOne({ _id: key, syncType: null }, { updateTime: new Date, syncType: null, hasData: true, data });
         }
 
         //为更新文档中的所有属性名前面添加'data.'

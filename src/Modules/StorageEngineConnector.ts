@@ -11,7 +11,7 @@ import { BaseStorageEngineConnection, BaseStorageEnginePlugin } from "../Storage
 export class StorageEngineConnector extends BaseServiceModule {
 
     //所有被加载的存储插件
-    private _storageEnginePlugins: { [name: string]: BaseStorageEnginePlugin };
+    private _storageEnginePlugins: { [name: string]: BaseStorageEnginePlugin } = {};
 
     //存储引擎连接
     private _storageEngineConnection: BaseStorageEngineConnection;
@@ -19,7 +19,7 @@ export class StorageEngineConnector extends BaseServiceModule {
     get connection() { return this._storageEngineConnection }
 
     async onStart(): Promise<void> {
-        _.forEach(requireDir(path.join(__dirname, '../StoragePlugins')), item => {
+        _.forEach(requireDir(path.join(__dirname, '../StorageEnginePlugins')), item => {
             if ('function' === typeof item) {
                 const plugin: BaseStorageEnginePlugin = new item;
                 this._storageEnginePlugins[plugin.name] = plugin;

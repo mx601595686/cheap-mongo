@@ -50,7 +50,6 @@ export class MongoConnector extends BaseServiceModule {
                                 description: '上次发生变化的时间。可能的情况有：从存储引擎读取到数据库，数据被更新或删除'
                             },
                             syncType: {
-                                bsonType: 'string',
                                 enum: [null, 'update', 'delete'],
                                 description: '判断如何同步数据变化，null:没有变化，update:数据被插入或更新，delete:数据被删除'
                             },
