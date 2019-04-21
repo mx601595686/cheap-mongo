@@ -51,7 +51,7 @@ export class HttpServer extends BaseServiceModule {
             this._logicController._syncData();
         });
 
-        this._koaRouter.post('_test', ctx => {  //主要是给客户端测试连接使用的
+        this._koaRouter.post('/_test', ctx => {  //主要是给客户端测试连接使用的
             ctx.body = 'cheap-db ok';
         });
     }

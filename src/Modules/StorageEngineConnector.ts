@@ -31,7 +31,7 @@ export class StorageEngineConnector extends BaseServiceModule {
         else if (!(process.env.STORAGE in this._storageEnginePlugins))
             throw new Error(`没有找到指定的存储引擎。[环境变量 STORAGE：${process.env.STORAGE}]`);
         else
-            this._storageEngineConnection = await this._storageEnginePlugins[process.env.STORAGE].getConnection(process.env.DBNAME as any /* MongoConnector 中已经检查过了 */);
+            this._storageEngineConnection = await this._storageEnginePlugins[process.env.STORAGE].getConnection(process.env.DBNAME || 'default');
     }
 
     onStop(): Promise<void> {

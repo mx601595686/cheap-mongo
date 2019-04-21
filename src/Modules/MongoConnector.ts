@@ -26,11 +26,7 @@ export class MongoConnector extends BaseServiceModule {
             this._mongoConnection = await mongodb.connect('mongodb://%2Ftmp%2Fmongodb-27017.sock', { autoReconnect: true, useNewUrlParser: true });
         }, 2000, 3);
 
-        //创建db
-        if (!process.env.DBNAME)
-            throw new Error('没有设置数据库名称 [环境变量 DBNAME]');
-        else
-            this._mongoDb = this._mongoConnection.db(process.env.DBNAME);
+        this._mongoDb = this._mongoConnection.db(process.env.DBNAME || 'default');
 
         //创建collection
         const hasCacheCollection = await this._mongoDb.listCollections({ name: 'cache' }, { nameOnly: true }).toArray();

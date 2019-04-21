@@ -109,11 +109,6 @@ HEALTHCHECK \
     # 调用程序所暴露出的健康检查接口(要使用绝对路径)
     CMD /app/node_modules/service-starter/src/Docker/health_check.sh
 
-# 默认数据库名称
-ENV DBNAME defualt
-# 缓存数据同步时间间隔，默认每10分钟
-ENV CACHE_SYNC_CRONTAB "*/10 * * * *"
-
 EXPOSE 80
 
 CMD ["node", "."]

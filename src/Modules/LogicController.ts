@@ -29,9 +29,7 @@ export class LogicController extends BaseServiceModule {
         this._mongoCollection = (this.services.MongoConnector as MongoConnector).collection;
         this._storageConnection = (this.services.StorageEngineConnector as StorageEngineConnector).connection;
 
-        if (!process.env.CACHE_SYNC_CRONTAB)
-            throw new Error('没有设置缓存数据同步定时器 [环境变量 CACHE_SYNC_CRONTAB]');
-        this._syncTimer = schedule.scheduleJob(process.env.CACHE_SYNC_CRONTAB, this._syncData.bind(this));
+        this._syncTimer = schedule.scheduleJob(process.env.CACHE_SYNC_CRONTAB || "*/10 * * * *", this._syncData.bind(this));
 
         if (process.env.MAX_CACHE_SIZE && /^\d+$/.test(process.env.MAX_CACHE_SIZE))
             this._maxCacheSize = Math.max(+process.env.MAX_CACHE_SIZE, 128 * 1024 * 1024);
