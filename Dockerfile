@@ -69,7 +69,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     mongodb-org \
     dos2unix \
     tzdata \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* && \
+    echo '# 设置系统时区' >> /root/.bashrc && \
+    echo 'ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone' >> /root/.bashrc
 
 # TZ：时区默认是上海
 ENV TZ=Asia/Shanghai
@@ -79,7 +81,6 @@ WORKDIR /app
 # 复制代码
 COPY ["src", "/app/src/"]
 COPY ["package.json", "gulpfile.js", "tsconfig.json", "LICENSE", "/app/"]
-COPY [".bashrc", "/root/.bashrc"]
 COPY ["mongod.conf", "/etc/mongod.conf"]
 
 VOLUME "/var/lib/mongodb"
