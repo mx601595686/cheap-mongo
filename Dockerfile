@@ -25,14 +25,20 @@ RUN npm install && \
 
 FROM mongo:4.0
 
+# 删除mongo设置的ENTRYPOINT
+ENTRYPOINT [] 
+
 RUN apt-get update && apt-get install -y --no-install-recommends \
     tzdata \
+    curl \
     && rm -rf /var/lib/apt/lists/* && \
     echo '# 设置系统时区' >> /root/.bashrc && \
     echo 'ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone' >> /root/.bashrc
 
 # TZ：时区默认是上海
 ENV TZ=Asia/Shanghai
+
+WORKDIR /app
 
 COPY mongod.conf /etc/mongod.conf
 COPY --from=builder /app /app
@@ -52,6 +58,4 @@ HEALTHCHECK \
 
 EXPOSE 80
 
-WORKDIR /app
-ENTRYPOINT [ "/bin/bash", "-c" ]
 CMD ["node", "."]
