@@ -23,7 +23,7 @@ RUN npm install && \
     dos2unix node_modules/service-starter/src/Docker/health_check.sh /root/.bashrc && \
     chmod 755 node_modules/service-starter/src/Docker/health_check.sh
 
-FROM mongo:4
+FROM mongo:4.0
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     tzdata \

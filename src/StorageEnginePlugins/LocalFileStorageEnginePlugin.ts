@@ -6,11 +6,11 @@ import { BaseStorageEnginePlugin, BaseStorageEngineConnection } from "./BaseStor
 
 /**
  * 本地文件存储引擎，该引擎主要是测试使用
- * 数据存放在：/var/lib/cheapdb
+ * 数据存放在：/data/cheap-db
  */
 export = class LocalFileStorageEnginePlugin implements BaseStorageEnginePlugin {
 
-    private static _dbPath = '/var/lib/cheapdb';
+    private static _dbPath = '/data/cheap-db';
 
     get name() { return 'local' }
 
