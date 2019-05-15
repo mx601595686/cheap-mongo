@@ -76,8 +76,11 @@ export class HttpServer extends BaseServiceModule {
 
             this._koaServer.use(async (ctx, next) => {
                 try {
-                    await next();
-                    if (ctx.body === undefined && ctx.request.method === 'POST') ctx.body = 'ok';
+                    if (ctx.request.method === 'POST') {
+                        await next();
+                        if (ctx.body === undefined) ctx.body = 'ok';
+                    } else
+                        ctx.status = 405;   //Method Not Allowd
                 } catch (err) {
                     ctx.status = err.statusCode || err.status || 400;
                     ctx.body = err.message;

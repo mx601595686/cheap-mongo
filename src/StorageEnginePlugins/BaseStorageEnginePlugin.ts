@@ -11,9 +11,8 @@ export interface BaseStorageEnginePlugin {
 
     /**
      * 获取连接。
-     * @param db 数据库名称
      */
-    getConnection(dbName: string): Promise<BaseStorageEngineConnection>;
+    getConnection(): Promise<BaseStorageEngineConnection>;
 }
 
 /**

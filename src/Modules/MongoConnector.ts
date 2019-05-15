@@ -26,7 +26,7 @@ export class MongoConnector extends BaseServiceModule {
             this._mongoConnection = await mongodb.connect('mongodb://%2Ftmp%2Fmongodb-27017.sock', { autoReconnect: true, useNewUrlParser: true });
         }, 2000, 3);
 
-        this._mongoDb = this._mongoConnection.db(process.env.DBNAME || 'default');
+        this._mongoDb = this._mongoConnection.db('cheap-db');
 
         //创建collection
         const hasCacheCollection = await this._mongoDb.listCollections({ name: 'cache' }, { nameOnly: true }).toArray();
@@ -43,7 +43,7 @@ export class MongoConnector extends BaseServiceModule {
                             },
                             updateTime: {
                                 bsonType: 'date',
-                                description: '上次发生变化的时间。可能的情况有：从存储引擎读取到数据库，数据被更新或删除'
+                                description: '最近一次发生变化的时间。可能的情况有：从存储引擎读取到数据库，数据被更新或删除'
                             },
                             syncType: {
                                 enum: [null, 'update', 'delete'],

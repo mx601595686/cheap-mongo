@@ -14,23 +14,21 @@ export = class LocalFileStorageEnginePlugin implements BaseStorageEnginePlugin {
 
     get name() { return 'local' }
 
-    async getConnection(dbName: string): Promise<BaseStorageEngineConnection> {
+    async getConnection(): Promise<BaseStorageEngineConnection> {
         log.warn.text.yellow('warning', "存储引擎'local'只是在测试时使用，生成环境中请不要使用");
-
-        const dbPath = nodePath.join(LocalFileStorageEnginePlugin._dbPath, dbName);
 
         return {
             async disconnect() { },
             async checkConnection() { },
             set(path: string, data: any) {
-                path = nodePath.join(dbPath, path);
+                path = nodePath.join(LocalFileStorageEnginePlugin._dbPath, path);
                 return fs.ensureFile(path).then(() => fs.writeJSON(path, data));
             },
             get(path: string) {
-                return fs.readJSON(nodePath.join(dbPath, path));
+                return fs.readJSON(nodePath.join(LocalFileStorageEnginePlugin._dbPath, path));
             },
             delete(path: string) {
-                return fs.remove(nodePath.join(dbPath, path));
+                return fs.remove(nodePath.join(LocalFileStorageEnginePlugin._dbPath, path));
             }
         };
     }

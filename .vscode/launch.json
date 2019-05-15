@@ -20,8 +20,8 @@
             * -e STORAGE="local" \ # 存储引擎
             * -v $(pwd)/bin:/app/bin \
             * -v $(pwd)/mongod.conf:/etc/mongod.conf \
-            * -v $(pwd)/db/mongoData:/var/lib/mongodb \ # 在windows下不能挂载这个
-            * -v $(pwd)/db/storageData:/var/lib/cheapdb \
+            * -v $(pwd)/db/mongoData:/data/db \ # 在windows下不能挂载这个
+            * -v $(pwd)/db/storageData:/data/cheap-db \
             * cheap-db:latest node --inspect-brk=0.0.0.0:9229 .
             */
         }
