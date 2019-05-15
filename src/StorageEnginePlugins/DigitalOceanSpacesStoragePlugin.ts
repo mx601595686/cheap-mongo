@@ -48,7 +48,7 @@ export = class DigitalOceanSpacesStoragePlugin implements BaseStorageEnginePlugi
                         ContentType: 'application/json',
                         Body: enableGzip ? await gzip(JSON.stringify(data)) : JSON.stringify(data)
                     }).promise();
-                }, { priority: 0 });
+                });
             },
             get(path: string) {
                 return pQueue.add(async () => {
@@ -62,7 +62,7 @@ export = class DigitalOceanSpacesStoragePlugin implements BaseStorageEnginePlugi
                 }, { priority: 1 });
             },
             async delete(path: string) {
-                await pQueue.add(() => spaces.deleteObject({ Bucket: process.env.SPACE_NAME as string, Key: path }).promise(), { priority: 2 });
+                await pQueue.add(() => spaces.deleteObject({ Bucket: process.env.SPACE_NAME as string, Key: path }).promise());
             }
         };
 
