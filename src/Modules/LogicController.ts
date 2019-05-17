@@ -32,7 +32,7 @@ export class LogicController extends BaseServiceModule {
         this._syncTimer = schedule.scheduleJob(process.env.CACHE_SYNC_CRONTAB || "*/10 * * * *", this._syncData.bind(this));
 
         if (process.env.MAX_CACHE_SIZE && /^\d+$/.test(process.env.MAX_CACHE_SIZE))
-            this._maxCacheSize = Math.max(+process.env.MAX_CACHE_SIZE, 128 * 1024 * 1024);
+            this._maxCacheSize = Math.max(+process.env.MAX_CACHE_SIZE, 128) * 1024 * 1024;
         else {
             const status = await this._mongoDb.stats();
             this._maxCacheSize = Math.trunc(status.fsTotalSize * 0.8);
