@@ -18,6 +18,7 @@
             * 
             * docker run --rm -it --name cheap-db -p 80:80 -p 9229:9229 -p 27017:27017 \
             * -e STORAGE="local" \ # 存储引擎
+            * -e PASSWORD=666 \ # 数据库密码
             * -v $(pwd)/bin:/app/bin \
             * -v $(pwd)/mongod.conf:/etc/mongod.conf \
             * -v $(pwd)/db/mongoData:/data/db \ # 在windows下不能挂载这个

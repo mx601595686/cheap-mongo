@@ -16,7 +16,7 @@ export class HttpServer extends BaseServiceModule {
     private _logicController: LogicController;
 
     //用于保存用户访问令牌数据，排在前面的是新令牌，每隔5分钟更新一次令牌，每个令牌最长有效期10分钟
-    private readonly _tokens: [string, string] = [randomString({ length: 36 }), randomString({ length: 36 })];
+    private readonly _tokens: [string, string] = [randomString({ length: 32 }), randomString({ length: 32 })];
     private _updateTokenTimer: NodeJS.Timer;
 
     //注册路由
@@ -83,7 +83,7 @@ export class HttpServer extends BaseServiceModule {
 
             this._updateTokenTimer = setInterval(() => {
                 this._tokens.pop();
-                this._tokens.unshift(randomString({ length: 36 }));
+                this._tokens.unshift(randomString({ length: 32 }));
             }, 5 * 60 * 1000);
 
             const koaServer = new koa();
