@@ -20,6 +20,7 @@
     "devDependencies": {
         "@types/component-emitter": "^1.2.8",
         "@types/fs-extra": "^7.0.0",
+        "@types/http-errors": "^1.6.1",
         "@types/koa": "^2.0.48",
         "@types/koa-router": "^7.0.40",
         "@types/lodash": "^4.14.126",
@@ -34,7 +35,9 @@
     "dependencies": {
         "aws-sdk": "^2.454.0",
         "bson-ext": "^2.0.2",
+        "crypto-random-string": "^3.0.0",
         "fs-extra": "^8.0.1",
+        "http-errors": "^1.7.2",
         "kerberos": "^1.1.2",
         "koa": "^2.7.0",
         "koa-body": "^4.1.0",

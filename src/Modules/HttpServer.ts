@@ -2,27 +2,45 @@ import * as http from 'http';
 import * as koa from 'koa';
 import * as koaBody from 'koa-body';
 import * as koaRouter from 'koa-router';
+import * as HttpError from 'http-errors';
 import * as _ from 'lodash';
+import * as randomString from 'crypto-random-string';
 import { BaseServiceModule } from "service-starter";
+import log from 'log-formatter';
 
 import { LogicController } from './LogicController';
 
 export class HttpServer extends BaseServiceModule {
 
     private _httpServer: http.Server;
-    private _koaServer: koa;
-    private _koaRouter: koaRouter;
     private _logicController: LogicController;
 
-    //注册路由
-    private _registerRoute(): void {
+    //用于保存用户访问令牌数据，排在前面的是新令牌，每隔5分钟更新一次令牌，每个令牌最长有效期10分钟
+    private readonly _tokens: [string, string] = [randomString({ length: 36 }), randomString({ length: 36 })];
+    private _updateTokenTimer: NodeJS.Timer;
 
-        this._koaRouter.post('/set', ctx => {
+    //注册路由
+    private _registerRoute(notLogged: koaRouter, logged: koaRouter): void {
+        notLogged.post('/login', ctx => {  //登陆获取令牌
+            if (ctx.request.body.password === process.env.PASSWORD) {
+                ctx.body = this._tokens[0];
+                log('数据库登陆：', ctx.request.ip);
+            } else {
+                log.error.text.round.red.text.red('登陆失败', `IP："${ctx.request.ip}"`, `使用的密码："${ctx.request.body.password}"`);
+                throw new HttpError.BadRequest();
+            }
+        });
+
+        logged.post('/updateToken', ctx => {  //更新令牌
+            ctx.body = this._tokens[0];
+        });
+
+        logged.post('/set', ctx => {
             if (!ctx.request.body.key) throw new Error('key 不可以为空');
             return this._logicController.set(ctx.request.body.key, JSON.parse(ctx.request.body.value));
         });
 
-        this._koaRouter.post('/get', async ctx => {
+        logged.post('/get', async ctx => {
             if (!ctx.request.body.key) throw new Error('key 不可以为空');
 
             let aggregation;
@@ -34,7 +52,7 @@ export class HttpServer extends BaseServiceModule {
             ctx.body = await this._logicController.get(ctx.request.body.key, aggregation);
         });
 
-        this._koaRouter.post('/update', ctx => {
+        logged.post('/update', ctx => {
             if (!ctx.request.body.key) throw new Error('key 不可以为空');
 
             const doc = JSON.parse(ctx.request.body.doc);
@@ -42,16 +60,16 @@ export class HttpServer extends BaseServiceModule {
             return this._logicController.update(ctx.request.body.key, doc);
         });
 
-        this._koaRouter.post('/delete', ctx => {
+        logged.post('/delete', ctx => {
             if (!ctx.request.body.key) throw new Error('key 不可以为空');
             return this._logicController.delete(ctx.request.body.key);
         });
 
-        this._koaRouter.post('/_syncData', () => {  //立即开始同步数据
+        logged.post('/syncData', () => {  //立即开始同步数据
             this._logicController._syncData();
         });
 
-        this._koaRouter.post('/_test', ctx => {  //主要是给客户端测试连接使用的
+        logged.post('/test', ctx => {  //主要是给客户端测试连接使用的
             ctx.body = 'cheap-db ok';
         });
     }
@@ -60,12 +78,21 @@ export class HttpServer extends BaseServiceModule {
         return new Promise(resolve => {
             this._logicController = this.services.LogicController;
 
-            this._koaServer = new koa();
-            this._koaRouter = new koaRouter();
+            if (!process.env.PASSWORD)
+                throw new Error('没有设置数据库密码 [环境变量 PASSWORD]');
 
-            this._registerRoute();
+            this._updateTokenTimer = setInterval(() => {
+                this._tokens.pop();
+                this._tokens.unshift(randomString({ length: 36 }));
+            }, 5 * 60 * 1000);
 
-            this._koaServer.use(koaBody({
+            const koaServer = new koa();
+            const notLogged = new koaRouter();
+            const logged = new koaRouter();
+
+            this._registerRoute(notLogged, logged);
+
+            koaServer.use(koaBody({
                 json: false,
                 jsonLimit: 1, //不能设置为0，否则无效
                 text: false,
@@ -74,7 +101,7 @@ export class HttpServer extends BaseServiceModule {
                 multipart: false,
             }));
 
-            this._koaServer.use(async (ctx, next) => {
+            koaServer.use(async (ctx, next) => {
                 try {
                     if (ctx.request.method === 'POST') {
                         await next();
@@ -87,14 +114,21 @@ export class HttpServer extends BaseServiceModule {
                 }
             });
 
-            this._koaServer.use(this._koaRouter.routes()).use(this._koaRouter.allowedMethods());
+            notLogged.use((ctx, next) => {
+                if (this._tokens.includes(ctx.request.body.token))
+                    return next();
+                else
+                    throw new HttpError.Unauthorized();
+            }, logged.routes(), logged.allowedMethods());
+            koaServer.use(notLogged.routes()).use(notLogged.allowedMethods());
 
-            this._httpServer = http.createServer(this._koaServer.callback()).listen(80, resolve);
+            this._httpServer = http.createServer(koaServer.callback()).listen(80, resolve);
         });
     }
 
     onStop(): Promise<void> {
         return new Promise((resolve, reject) => {
+            clearInterval(this._updateTokenTimer);
             this._httpServer.close(e => e ? reject(e) : resolve());
             setTimeout(resolve, 5000);  //最多等待5秒
         });
