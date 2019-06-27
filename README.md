@@ -14,6 +14,12 @@
         * `ENDPOINT`：spaces服务器端点
         * `SPACE_NAME`：要使用的space名称(注意：要使用的space必须事先被建立好)
         * `ENABLE_GZIP`：是否开启Gzip压缩，默认`true`
+    * `cos`：腾讯云 COS。该存储引擎需要以下配置
+        * `SECRET_ID`：访问秘钥ID。[这里获得](https://console.cloud.tencent.com/capi)
+        * `SECRET_KEY`：秘钥密码
+        * `BUCKET`：存储桶名称
+        * `REGION`：[地域名称](https://cloud.tencent.com/document/product/436/6224)
+        * `ENABLE_GZIP`：是否开启Gzip压缩，默认`true`
 
 ### VOLUME
 * `/data/db`：数据索引列表与缓存数据存放目录。请妥善保管数据。

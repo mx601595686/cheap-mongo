@@ -1,6 +1,6 @@
 import * as zlib from 'zlib';
-import * as aws from 'aws-sdk';
 import PQueue from 'p-queue';
+const COS = require('cos-nodejs-sdk-v5');
 
 import { BaseStorageEnginePlugin, BaseStorageEngineConnection } from "./BaseStorageEnginePlugin";
 
@@ -16,53 +16,73 @@ function gunzip(data: zlib.InputType): Promise<Buffer> {
     });
 }
 
-export = class DigitalOceanSpacesStoragePlugin implements BaseStorageEnginePlugin {
+/**
+ * 由于腾讯COS返回的不是标准的JS Error类型对象，通过该方法进行校正
+ */
+function changeErrorType(err: { error: any }): Error {
+    if (typeof err.error === 'string')
+        return new Error(err.error);
+    else
+        return err.error;
+}
 
-    get name() { return 'spaces' }
+export = class TencentCosStoragePlugin implements BaseStorageEnginePlugin {
+
+    get name() { return 'cos' }
 
     async getConnection(): Promise<BaseStorageEngineConnection> {
-        const pQueue = new PQueue({ interval: 1000, intervalCap: 200 });    //速度限制。按照digital ocean的要求最多每秒200个请求
+        const pQueue = new PQueue({ interval: 1000, intervalCap: 1000 });    //速度限制。按照腾讯的要求最多每秒1000个请求
         const enableGzip = (process.env.ENABLE_GZIP || '').toLowerCase() === 'false' ? false : true;    //是否开启gzip压缩，默认true
-        const spaces = new aws.S3({
-            endpoint: `https://${process.env.ENDPOINT}`,
-            accessKeyId: process.env.ACCESS_KEY,
-            secretAccessKey: process.env.SECRET,
-            maxRetries: 5,
-            retryDelayOptions: { base: 100 }
+        const cos = new COS({
+            SecretId: process.env.SECRET_ID,
+            SecretKey: process.env.SECRET_KEY,
+            FileParallelLimit: 999,
+            ChunkParallelLimit: 999,
+            ChunkSize: 1024 * 1024 * 10,
         });
 
         const connection: BaseStorageEngineConnection = {
             disconnect() {
                 return pQueue.onIdle();
             },
-            async checkConnection() {
-                const result = await pQueue.add(() => spaces.getBucketLocation({ Bucket: process.env.SPACE_NAME as string }).promise());
-                if (typeof result.LocationConstraint !== 'string') throw new Error('DigitalOcean Spaces Storage 连接异常');
+            checkConnection() {
+                return pQueue.add(() => new Promise((resolve, reject) => {
+                    cos.headBucket({
+                        Bucket: process.env.BUCKET,
+                        Region: process.env.REGION
+                    }, function (err: any, data: any) {
+                        if (err)
+                            reject(changeErrorType(err));
+                        else {
+                            resolve();
+                        }
+                    });
+                }));
             },
             set(path: string, data: any) {
                 return pQueue.add(async () => {
-                    await spaces.putObject({
+                  /*   await spaces.putObject({
                         Bucket: process.env.SPACE_NAME as string,
                         Key: path,
                         ContentEncoding: enableGzip ? 'gzip' : undefined,
                         ContentType: 'application/json',
                         Body: enableGzip ? await gzip(JSON.stringify(data)) : JSON.stringify(data)
-                    }).promise();
+                    }).promise(); */
                 });
             },
             get(path: string) {
                 return pQueue.add(async () => {
-                    const result = await spaces.getObject({ Bucket: process.env.SPACE_NAME as string, Key: path }).promise()
+                  /*   const result = await spaces.getObject({ Bucket: process.env.SPACE_NAME as string, Key: path }).promise()
                         .catch((e: aws.AWSError) => { if (!e.message) e.message = e.code; throw e });
 
                     if (result.ContentEncoding === 'gzip')
                         return JSON.parse((await gunzip(result.Body as Buffer)).toString());
                     else
-                        return JSON.parse((result.Body as Buffer).toString());
+                        return JSON.parse((result.Body as Buffer).toString()); */
                 }, { priority: 1 });
             },
             async delete(path: string) {
-                await pQueue.add(() => spaces.deleteObject({ Bucket: process.env.SPACE_NAME as string, Key: path }).promise());
+                //await pQueue.add(() => spaces.deleteObject({ Bucket: process.env.SPACE_NAME as string, Key: path }).promise());
             }
         };
 
