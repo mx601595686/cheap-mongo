@@ -36,8 +36,8 @@ export = class TencentCosStoragePlugin implements BaseStorageEnginePlugin {
         const cos = new COS({
             SecretId: process.env.SECRET_ID,
             SecretKey: process.env.SECRET_KEY,
-            FileParallelLimit: 999,
-            ChunkParallelLimit: 999,
+            FileParallelLimit: 99999,
+            ChunkParallelLimit: 99999,
             ChunkSize: 1024 * 1024 * 10,
         });
 
@@ -50,39 +50,54 @@ export = class TencentCosStoragePlugin implements BaseStorageEnginePlugin {
                     cos.headBucket({
                         Bucket: process.env.BUCKET,
                         Region: process.env.REGION
-                    }, function (err: any, data: any) {
-                        if (err)
-                            reject(changeErrorType(err));
-                        else {
-                            resolve();
-                        }
-                    });
+                    }, (err: any) => err ? reject(changeErrorType(err)) : resolve());
                 }));
             },
             set(path: string, data: any) {
                 return pQueue.add(async () => {
-                  /*   await spaces.putObject({
-                        Bucket: process.env.SPACE_NAME as string,
-                        Key: path,
-                        ContentEncoding: enableGzip ? 'gzip' : undefined,
-                        ContentType: 'application/json',
-                        Body: enableGzip ? await gzip(JSON.stringify(data)) : JSON.stringify(data)
-                    }).promise(); */
+                    data = enableGzip ? await gzip(JSON.stringify(data)) : JSON.stringify(data);
+                    return new Promise<void>((resolve, reject) => {
+                        cos.putObject({
+                            Bucket: process.env.BUCKET,
+                            Region: process.env.REGION,
+                            Key: path.replace(/\//g, '_'),    //腾讯云COS对'/'的处理存在问题
+                            Body: data,
+                            ContentEncoding: enableGzip ? 'gzip' : undefined,
+                            ContentType: 'application/json',
+                        }, (err: any) => err ? reject(changeErrorType(err)) : resolve());
+                    });
                 });
             },
             get(path: string) {
-                return pQueue.add(async () => {
-                  /*   const result = await spaces.getObject({ Bucket: process.env.SPACE_NAME as string, Key: path }).promise()
-                        .catch((e: aws.AWSError) => { if (!e.message) e.message = e.code; throw e });
-
-                    if (result.ContentEncoding === 'gzip')
-                        return JSON.parse((await gunzip(result.Body as Buffer)).toString());
-                    else
-                        return JSON.parse((result.Body as Buffer).toString()); */
-                }, { priority: 1 });
+                return pQueue.add(() => new Promise((resolve, reject) => {
+                    cos.getObject({
+                        Bucket: process.env.BUCKET,
+                        Region: process.env.REGION,
+                        Key: path.replace(/\//g, '_'),
+                    }, async function (err: any, data: any) {
+                        if (err)
+                            reject(changeErrorType(err));
+                        else {
+                            try {
+                                if (data.headers["content-encoding"] === 'gzip')
+                                    resolve(JSON.parse((await gunzip(data.Body)).toString()));
+                                else
+                                    resolve(JSON.parse(data.Body.toString()));
+                            } catch (error) {
+                                reject(error);
+                            }
+                        }
+                    });
+                }), { priority: 1 });
             },
-            async delete(path: string) {
-                //await pQueue.add(() => spaces.deleteObject({ Bucket: process.env.SPACE_NAME as string, Key: path }).promise());
+            delete(path: string) {
+                return pQueue.add(() => new Promise((resolve, reject) => {
+                    cos.deleteObject({
+                        Bucket: process.env.BUCKET,
+                        Region: process.env.REGION,
+                        Key: path.replace(/\//g, '_'),
+                    }, (err: any) => err ? reject(changeErrorType(err)) : resolve());
+                }));
             }
         };
 
