@@ -236,28 +236,29 @@ export class LogicController extends BaseServiceModule {
                 //开始迁移数据
                 const totalNumber = (await this._mongoCollection.stats()).count;    //获取任务总数
                 let currentNumber = 0;   //当前进度
-                const cursor = this._mongoCollection.find({}, { projection: { _id: 1 }, batchSize: 100 })
+
+                const cursor = this._mongoCollection.find({}, { projection: { _id: 1 }, batchSize: 1 })
                     .on('error', e => log.error.red.content.red('迁移数据库数据时发生异常：', e))
                     .on('close', () => {
                         clearInterval(timer);
                         this._isMigration = false;
                         log.cyan.bold('迁移数据结束');
                     })
-                    .on('data', async (data: { _id: string }[]) => {
+                    .on('data', async (item: { _id: string }) => {
                         cursor.pause();
 
-                        for (const item of data) {
-                            try {
-                                const value = JSON.stringify(await this._storageConnection.get(item._id));
-                                await retryUntil(async () => request.post(target + '/set', { form: { token, key: item._id, value }, timeout: 120000 }), 10 * 1000, 3);
-                            } catch (error) {
-                                log.error.red.location.red.content.red('迁移数据库数据时发生异常：', item._id, error);
-                                cursor.close();
-                                return;
-                            }
+                        try {
+                            const value = JSON.stringify(await this._storageConnection.get(item._id));
+                            await retryUntil(() => request.post(target + '/set', { form: { token, key: item._id, value }, timeout: 120000 }) as any, 10 * 1000, 3);
+                        } catch (error) {
+                            log.error.red.location.red.content.red('迁移数据库数据时发生异常：', item._id, error);
+                            cursor.close();
+                            return;
                         }
 
-                        log('已完成', `${currentNumber += 100}/${totalNumber}`, (currentNumber / totalNumber * 100).toFixed(2));
+                        if ((++currentNumber) % 100 === 0)
+                            log('已完成', `${currentNumber}/${totalNumber}`, (currentNumber / totalNumber * 100).toFixed(2) + '%');
+
                         cursor.resume();
                     });
             } catch (error) {

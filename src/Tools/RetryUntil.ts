@@ -9,11 +9,12 @@ export async function retryUntil<T>(func: () => Promise<T>, interval: number, re
 
     while (true) {
         try {
-            await new Promise(resolve => setTimeout(resolve, interval));
             return await func();
         } catch (error) {
             if (++index > retry)
                 throw error;
+            else
+                await new Promise(resolve => setTimeout(resolve, interval));
         }
     }
 }
