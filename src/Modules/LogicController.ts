@@ -1,10 +1,12 @@
 import * as _ from 'lodash';
 import * as mongodb from 'mongodb';
 import * as schedule from 'node-schedule';
+import * as request from 'request-promise-native';
 import log from 'log-formatter';
 import { BaseServiceModule } from "service-starter";
 
 import { retryUntil } from '../Tools/RetryUntil';
+import { waitUntil } from '../Tools/WaitUntil';
 import { MongoConnector } from "./MongoConnector";
 import { StorageEngineConnector } from "./StorageEngineConnector";
 import { BaseStorageEngineConnection } from "../StorageEnginePlugins/BaseStorageEnginePlugin";
@@ -20,6 +22,7 @@ export class LogicController extends BaseServiceModule {
 
     private _isCleaning = false;        //是否正在清理
     private _isSynchronizing = false;   //是否正在同步
+    private _isMigration = false;       //是否正在迁移
     private _cleanTimer: NodeJS.Timer;
     private _syncTimer: schedule.Job;
     private _maxCacheSize: number;   //最大缓存大小（mongo数据库大小）
@@ -204,5 +207,62 @@ export class LogicController extends BaseServiceModule {
             $set: { updateTime: new Date, syncType: 'delete', hasData: false },
             $unset: { data: "" }
         });
+    }
+
+    /**
+     * 迁移数据库数据
+     */
+    async migrate(target: string, password: string): Promise<void> {
+        if (!this._isMigration) {
+            this._isMigration = true;
+            log.yellow.bold('开始迁移数据，在迁移过程中请不要进行任何数据库操作，以免数据出现不一致');
+            let timer: NodeJS.Timer, token: string;
+
+            try {
+                //先同步数据
+                this._syncData();
+                await waitUntil(async () => !this._isSynchronizing, 30 * 1000, 50, '等待数据库同步数据超时');
+
+                //登陆数据库
+                token = await request.post(target + '/login', { form: { password }, timeout: 120000 });
+
+                //定时更新令牌
+                timer = setInterval(() => {
+                    retryUntil(async () => {
+                        token = await request.post(target + '/updateToken', { form: { token }, timeout: 120000 });
+                    }, 10000, 3).catch(e => log.error.red.content.red('迁移数据库数据时，更新目标数据库令牌失败：', e));
+                }, 3 * 60 * 1000);
+
+                //开始迁移数据
+                const totalNumber = (await this._mongoCollection.stats()).count;    //获取任务总数
+                let currentNumber = 0;   //当前进度
+                const cursor = this._mongoCollection.find({}, { projection: { _id: 1 }, batchSize: 100 })
+                    .on('error', e => log.error.red.content.red('迁移数据库数据时发生异常：', e))
+                    .on('close', () => {
+                        clearInterval(timer);
+                        this._isMigration = false;
+                        log.cyan.bold('迁移数据结束');
+                    })
+                    .on('data', async (data: { _id: string }[]) => {
+                        cursor.pause();
+
+                        for (const item of data) {
+                            try {
+                                const value = JSON.stringify(await this._storageConnection.get(item._id));
+                                await retryUntil(async () => request.post(target + '/set', { form: { token, key: item._id, value }, timeout: 120000 }), 10 * 1000, 3);
+                            } catch (error) {
+                                log.error.red.location.red.content.red('迁移数据库数据时发生异常：', item._id, error);
+                                cursor.close();
+                                return;
+                            }
+                        }
+
+                        log('已完成', `${currentNumber += 100}/${totalNumber}`, (currentNumber / totalNumber * 100).toFixed(2));
+                        cursor.resume();
+                    });
+            } catch (error) {
+                log.error.red.bold.content.red('迁移数据库数据失败：', error);
+            }
+        }
     }
 }

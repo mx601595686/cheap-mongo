@@ -69,6 +69,12 @@ export class HttpServer extends BaseServiceModule {
             this._logicController._syncData();
         });
 
+        logged.post('/migrate', ctx => {  //开始迁移数据
+            if (!ctx.request.body.target) throw new Error('target 不可以为空');
+            if (!ctx.request.body.password) throw new Error('password 不可以为空');
+            this._logicController.migrate(ctx.request.body.target, ctx.request.body.password);
+        });
+
         logged.post('/test', ctx => {  //主要是给客户端测试连接使用的
             ctx.body = 'cheap-db ok';
         });
