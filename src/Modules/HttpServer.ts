@@ -35,6 +35,10 @@ export class HttpServer extends BaseServiceModule {
             ctx.body = this._tokens[0];
         });
 
+        logged.post('/test', ctx => {  //主要是给客户端测试连接使用的
+            ctx.body = 'cheap-db ok';
+        });
+
         logged.post('/set', ctx => {
             if (!ctx.request.body.key) throw new Error('key 不可以为空');
             return this._logicController.set(ctx.request.body.key, JSON.parse(ctx.request.body.value));
@@ -65,18 +69,18 @@ export class HttpServer extends BaseServiceModule {
             return this._logicController.delete(ctx.request.body.key);
         });
 
-        logged.post('/syncData', () => {  //立即开始同步数据
+        logged.post('/syncData', () => {
             this._logicController._syncData();
         });
 
-        logged.post('/migrate', ctx => {  //开始迁移数据
+        logged.post('/migrate', ctx => {
             if (!ctx.request.body.target) throw new Error('target 不可以为空');
             if (!ctx.request.body.password) throw new Error('password 不可以为空');
             this._logicController.migrate(ctx.request.body.target, ctx.request.body.password);
         });
 
-        logged.post('/test', ctx => {  //主要是给客户端测试连接使用的
-            ctx.body = 'cheap-db ok';
+        logged.post('/fillCache', () => {
+            this._logicController.fillCache();
         });
     }
 
