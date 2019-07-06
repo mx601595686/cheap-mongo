@@ -23,7 +23,6 @@ export class LogicController extends BaseServiceModule {
     private _isCleaning = false;        //是否正在清理
     private _isSynchronizing = false;   //是否正在同步
     private _isMigration = false;       //是否正在迁移
-    private _hasFilledCache = false;    //是否已将存储引擎中的全部数据读取到了缓存中
     private _cleanTimer: NodeJS.Timer;
     private _syncTimer: schedule.Job;
     private _maxCacheSize: number;   //最大缓存大小（mongo数据库大小）
@@ -259,32 +258,6 @@ export class LogicController extends BaseServiceModule {
             } catch (error) {
                 log.error.red.bold.content.red('迁移数据库数据失败：', error);
             }
-        }
-    }
-
-    /**
-     * 将存储引擎中的数据全部读取到缓存中
-     */
-    async fillCache(): Promise<void> {
-        if (!this._hasFilledCache) {
-            this._hasFilledCache = true;
-            log.yellow.bold('开始将存储引擎中的数据填充到缓存中，请确保您有足够多的硬盘空间来存放这些数据');
-
-            this._syncData();       //首先同步数据
-            await this.onStop();    //关闭清理缓存和数据同步
-
-            const items = await this._mongoCollection.find({ hasData: false }, { projection: { _id: 1 } }).toArray();
-            let index = 0;
-
-            for (const { _id: key } of items) {
-                const data = await this._storageConnection.get(key);
-                await this._mongoCollection.replaceOne({ _id: key, syncType: null }, { updateTime: new Date, syncType: null, hasData: true, data });
-
-                if ((++index) % 100 === 0)
-                    log('已完成', `${index}/${items.length}`, (index / items.length * 100).toFixed(2) + '%');
-            }
-
-            log.cyan.bold('填充缓存完成');
         }
     }
 }
