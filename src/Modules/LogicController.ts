@@ -1,7 +1,7 @@
 import * as _ from 'lodash';
 import * as mongodb from 'mongodb';
 import * as schedule from 'node-schedule';
-import * as request from 'request-promise-native';
+import PQueue from 'p-queue';
 import log from 'log-formatter';
 import { BaseServiceModule } from "service-starter";
 
@@ -203,60 +203,54 @@ export class LogicController extends BaseServiceModule {
     /**
      * 迁移数据库数据
      */
-    async migrate(target: string, password: string): Promise<void> {
+    async migrate(remoteMongo: string, migrateAll: boolean): Promise<void> {
         if ((process.env.ENABLE_MIGRATE || '').toLowerCase() !== 'true')
             throw new Error('数据库迁移功能未开启');
 
         if (!this._isMigration) {
             this._isMigration = true;
             log.yellow.bold('开始迁移数据，在迁移过程中请不要进行任何数据库操作，以免数据出现不一致');
-            let timer: NodeJS.Timer, token: string;
 
             try {
-                //先同步数据
+                log('开始登陆远端mongo数据库');
+                const remoteDb = await mongodb.connect(remoteMongo, { autoReconnect: true, useNewUrlParser: true });
+                const remoteCollection = remoteDb.db('cheap-db').collection('cache');
+
+                log('开始同步本地同步数据变化');
                 this._syncData();
-                await waitUntil(async () => !this._isSynchronizing, 30 * 1000, 50, '等待数据库同步数据超时');
+                await waitUntil(async () => !this._isSynchronizing, 30 * 1000, 50, '等待同步本地同步数据变化超时');
 
-                //登陆数据库
-                token = await request.post(target + '/login', { form: { password }, timeout: 120000 });
+                log('开始获取要迁移的数据列表');
+                const remoteList: string[] = _.map(migrateAll ? [] : await remoteCollection.find({}).project({ _id: 1 }).toArray(), '_id');
+                const localList: string[] = _.map(await this._mongoCollection.find({}).project({ _id: 1 }).toArray(), '_id');
+                const remoteSet = new Set(remoteList);
+                const migrateList = remoteSet.size === 0 ? localList : localList.filter(item => !remoteSet.has(item));
 
-                //定时更新令牌
-                timer = setInterval(() => {
-                    retryUntil(async () => {
-                        token = await request.post(target + '/updateToken', { form: { token }, timeout: 120000 });
-                    }, 10000, 3).catch(e => log.error.red.content.red('迁移数据库数据时，更新目标数据库令牌失败：', e));
-                }, 3 * 60 * 1000);
-
-                //开始迁移数据
-                const totalNumber = (await this._mongoCollection.stats()).count;    //获取任务总数
-                let currentNumber = 0;   //当前进度
-
-                const cursor = this._mongoCollection.find({}, { projection: { _id: 1 }, batchSize: 1 })
-                    .on('error', e => log.error.red.content.red('迁移数据库数据时发生异常：', e))
-                    .on('close', () => {
-                        clearInterval(timer);
-                        this._isMigration = false;
-                        log.cyan.bold('迁移数据结束');
-                    })
-                    .on('data', async (item: { _id: string }) => {
-                        cursor.pause();
-
+                const queue = new PQueue({ concurrency: 10, autoStart: false });
+                let progress = 0, total = migrateList.length;
+                for (const item of migrateList) {
+                    queue.add(async () => {
                         try {
-                            const value = JSON.stringify(await this._storageConnection.get(item._id));
-                            await retryUntil(() => request.post(target + '/set', { form: { token, key: item._id, value }, timeout: 120000 }) as any, 10 * 1000, 3);
+                            const data = await this._storageConnection.get(item);
+                            await retryUntil(() => remoteCollection.replaceOne({ _id: item }, { updateTime: new Date, syncType: 'update', hasData: true, data }, { upsert: true }), 10 * 1000, 3);
+                            if ((++progress) % 100 === 0)
+                                log('已完成', `${progress}/${total}`, (progress / total * 100).toFixed(2) + '%');
                         } catch (error) {
-                            log.error.red.location.red.content.red('迁移数据库数据时发生异常：', item._id, error);
-                            cursor.close();
-                            return;
+                            log.error.red.location.red.content.red('迁移数据库数据时发生异常：', item, error);
+                            queue.clear();
                         }
-
-                        if ((++currentNumber) % 100 === 0)
-                            log('已完成', `${currentNumber}/${totalNumber}`, (currentNumber / totalNumber * 100).toFixed(2) + '%');
-
-                        cursor.resume();
                     });
+                }
+
+                log('开始同步');
+                queue.start();
+                queue.onIdle().then(() => {
+                    this._isMigration = false;
+                    log.cyan.bold('迁移数据结束');
+                });
             } catch (error) {
-                log.error.red.bold.content.red('迁移数据库数据失败：', error);
+                log.error.red.bold.content.red('迁移数据失败：', error);
+                this._isMigration = false;
             }
         }
     }
