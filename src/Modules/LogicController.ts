@@ -62,9 +62,9 @@ export class LogicController extends BaseServiceModule {
                 if (status.dataSize + status.indexSize > this._maxCacheSize) {
                     log.text.cyan('开始清理缓存');
 
-                    const deleteItems = await this._mongoCollection.find({ hasData: true, syncType: null }, {
+                    const deleteItems = await this._mongoCollection.find({ syncType: null, hasData: true }, {
                         sort: { updateTime: 1 },
-                        limit: Math.trunc(this._maxCacheSize * 0.1 / status.avgObjSize),   //估算一下大约要删掉多少个文档
+                        limit: Math.trunc(this._maxCacheSize * 0.1 / status.avgObjSize / 2),   //估算一下大约要删掉多少个文档。除2是为了避免没有data文档所造成的偏差
                         projection: { _id: 1 }
                     }).toArray();
 
