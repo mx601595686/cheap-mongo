@@ -3,10 +3,6 @@ FROM node:11-stretch as builder
 # 提升node内存大小上限
 ENV NODE_OPTIONS="--max_old_space_size=4096"
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    dos2unix \
-    && rm -rf /var/lib/apt/lists/*
-
 WORKDIR /app
 
 # 复制代码
@@ -23,7 +19,6 @@ RUN npm install && \
     # 确保程序代码不会被破坏
     chmod 755 /app && \
     # 确保可执行
-    dos2unix node_modules/service-starter/src/Docker/health_check.sh /root/.bashrc && \
     chmod 755 node_modules/service-starter/src/Docker/health_check.sh
 
 FROM mongo:4.0
