@@ -1,8 +1,8 @@
-import * as zlib from 'zlib';
-import * as aws from 'aws-sdk';
+import zlib from 'zlib';
+import aws from 'aws-sdk';
 import PQueue from 'p-queue';
 
-import { BaseStorageEnginePlugin, BaseStorageEngineConnection } from "./BaseStorageEnginePlugin";
+import { IBaseStorageEnginePlugin, IBaseStorageEngineConnection } from './IBaseStorageEnginePlugin';
 
 function gzip(data: zlib.InputType): Promise<Buffer> {
     return new Promise((resolve, reject) => {
@@ -16,13 +16,13 @@ function gunzip(data: zlib.InputType): Promise<Buffer> {
     });
 }
 
-export = class DigitalOceanSpacesStoragePlugin implements BaseStorageEnginePlugin {
+export = class DigitalOceanSpacesStoragePlugin implements IBaseStorageEnginePlugin {
 
-    get name() { return 'spaces' }
+    get name(): string { return 'spaces' }
 
-    async getConnection(): Promise<BaseStorageEngineConnection> {
-        const pQueue = new PQueue({ interval: 1000, intervalCap: 200 });    //速度限制。按照digital ocean的要求最多每秒200个请求
-        const enableGzip = (process.env.ENABLE_GZIP || '').toLowerCase() === 'false' ? false : true;    //是否开启gzip压缩，默认true
+    async getConnection(): Promise<IBaseStorageEngineConnection> {
+        const pQueue = new PQueue({ interval: 1000, intervalCap: 200 }); // 速度限制。按照digital ocean的要求最多每秒200个请求
+        const enableGzip = (process.env.ENABLE_GZIP || '').toLowerCase() !== 'false'; // 是否开启gzip压缩，默认true
         const spaces = new aws.S3({
             endpoint: `https://${process.env.ENDPOINT}`,
             accessKeyId: process.env.ACCESS_KEY,
@@ -31,7 +31,7 @@ export = class DigitalOceanSpacesStoragePlugin implements BaseStorageEnginePlugi
             retryDelayOptions: { base: 100 }
         });
 
-        const connection: BaseStorageEngineConnection = {
+        const connection: IBaseStorageEngineConnection = {
             disconnect() {
                 return pQueue.onIdle();
             },

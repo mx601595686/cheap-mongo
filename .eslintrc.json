@@ -1,0 +1,6 @@
+{
+    "extends": "sufu",
+    "rules": {
+        "eqeqeq": "off"
+    }
+}

@@ -1,7 +1,7 @@
-FROM node:11-stretch as builder
+FROM node:12-stretch as builder
 
 # 提升node内存大小上限
-ENV NODE_OPTIONS="--max_old_space_size=4096"
+ENV NODE_OPTIONS="--max_old_space_size=8192"
 
 WORKDIR /app
 

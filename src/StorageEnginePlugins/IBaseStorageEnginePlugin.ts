@@ -3,7 +3,7 @@
  * 
  * 注意：所有存储引擎插件都必须都存放在`StorageEnginePlugins`目录下，并且都必须使用`export =`导出
  */
-export interface BaseStorageEnginePlugin {
+export interface IBaseStorageEnginePlugin {
     /**
      * 存储引擎的名称（必须唯一）
      */
@@ -12,13 +12,13 @@ export interface BaseStorageEnginePlugin {
     /**
      * 获取连接。
      */
-    getConnection(): Promise<BaseStorageEngineConnection>;
+    getConnection(): Promise<IBaseStorageEngineConnection>;
 }
 
 /**
  * 存储引擎连接接口
  */
-export interface BaseStorageEngineConnection {
+export interface IBaseStorageEngineConnection {
     /**
      * 断开连接
      */

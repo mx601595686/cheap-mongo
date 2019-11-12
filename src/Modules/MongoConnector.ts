@@ -1,5 +1,5 @@
-import * as child_process from 'child_process';
-import * as mongodb from 'mongodb';
+import mongodb from 'mongodb';
+import child_process from 'child_process';
 import { BaseServiceModule } from 'service-starter';
 
 import { retryUntil } from '../Tools/RetryUntil';
@@ -8,29 +8,28 @@ import { retryUntil } from '../Tools/RetryUntil';
  * 启动mongodb并建立起连接
  */
 export class MongoConnector extends BaseServiceModule {
-
     private _mongoInstance: child_process.ChildProcess;
     private _mongoConnection: mongodb.MongoClient;
     private _mongoDb: mongodb.Db;
     private _mongoCollection: mongodb.Collection;
 
-    get collection() { return this._mongoCollection };
-    get db() { return this._mongoDb };
+    get collection(): mongodb.Collection { return this._mongoCollection }
+    get db(): mongodb.Db { return this._mongoDb }
 
     async onStart(): Promise<void> {
-        //启动mongo
+        // 启动mongo
         this._mongoInstance = child_process.spawn('mongod', ['-f', '/etc/mongod.conf']);
 
-        //建立连接
+        // 建立连接
         await retryUntil(async () => {
             this._mongoConnection = await mongodb.connect('mongodb://%2Ftmp%2Fmongodb-27017.sock', { autoReconnect: true, useNewUrlParser: true });
         }, 2000, 3);
 
         this._mongoDb = this._mongoConnection.db('cheap-db');
 
-        //创建collection
+        // 创建collection
         const hasCacheCollection = await this._mongoDb.listCollections({ name: 'cache' }, { nameOnly: true }).toArray();
-        if (hasCacheCollection.length === 0) {  //判断collection是否已经创建了
+        if (hasCacheCollection.length === 0) {  // 判断collection是否已经创建了
             this._mongoCollection = await this._mongoDb.createCollection('cache', {
                 validator: {
                     $jsonSchema: {
@@ -74,11 +73,11 @@ export class MongoConnector extends BaseServiceModule {
                 this._mongoInstance.once('exit', resolve);
                 this._mongoInstance.kill();
             });
-            setTimeout(resolve, 5000);  //最多等待5秒
+            setTimeout(resolve, 5000);  // 最多等待5秒
         });
     }
 
-    async onHealthCheck() {
+    async onHealthCheck(): Promise<void> {
         const status = await this._mongoDb.stats();
         if (typeof status.storageSize !== 'number')
             throw new Error('Mongo数据库健康检查异常');

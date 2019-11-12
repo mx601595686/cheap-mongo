@@ -1,20 +1,19 @@
 {
     "compilerOptions": {
         "module": "commonjs",
-        "target": "es2017",
-        "removeComments": true,
+        "target": "es2018",
         "preserveConstEnums": false,
-        "declaration": false,
         "experimentalDecorators": false,
         "noEmitOnError": true,
         "strict": true,
         "strictPropertyInitialization": false,
-        "lib": [
-            "esnext"
-        ]
+        "skipLibCheck": true,
+        "resolveJsonModule": true,
+        "forceConsistentCasingInFileNames": true,
+        "esModuleInterop": true,
+        "declaration": false,
+        "removeComments": true,
+        "lib": ["esnext"]
     },
-    "exclude": [
-        "node_modules",
-        "bin"
-    ]
+    "exclude": ["node_modules", "bin"]
 }

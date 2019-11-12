@@ -1,27 +1,27 @@
-import * as path from 'path';
-import * as _ from 'lodash';
-import { BaseServiceModule } from "service-starter";
-import requireDir = require('require-dir');
+import _ from 'lodash';
+import path from 'path';
+import requireDir from 'require-dir';
+import { BaseServiceModule } from 'service-starter';
 
-import { BaseStorageEngineConnection, BaseStorageEnginePlugin } from "../StorageEnginePlugins/BaseStorageEnginePlugin";
+import { IBaseStorageEngineConnection, IBaseStorageEnginePlugin } from '../StorageEnginePlugins/IBaseStorageEnginePlugin';
 
 /**
  * 建立与存储引擎的连接
  */
 export class StorageEngineConnector extends BaseServiceModule {
 
-    //所有被加载的存储插件
-    private _storageEnginePlugins: { [name: string]: BaseStorageEnginePlugin } = {};
+    // 所有被加载的存储插件
+    private _storageEnginePlugins: { [name: string]: IBaseStorageEnginePlugin } = {};
 
-    //存储引擎连接
-    private _storageEngineConnection: BaseStorageEngineConnection;
+    // 存储引擎连接
+    private _storageEngineConnection: IBaseStorageEngineConnection;
 
-    get connection() { return this._storageEngineConnection }
+    get connection(): IBaseStorageEngineConnection { return this._storageEngineConnection }
 
     async onStart(): Promise<void> {
         _.forEach(requireDir(path.join(__dirname, '../StorageEnginePlugins')), item => {
             if ('function' === typeof item) {
-                const plugin: BaseStorageEnginePlugin = new item;
+                const plugin: IBaseStorageEnginePlugin = new item();
                 this._storageEnginePlugins[plugin.name] = plugin;
             }
         });

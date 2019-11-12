@@ -9,13 +9,13 @@ class CheapDB extends DockerServicesManager {
     constructor() {
         super();
 
-        //注册模块
-        this.registerService(new MongoConnector)
-        this.registerService(new StorageEngineConnector)
-        this.registerService(new LogicController)
-        this.registerService(new HttpServer)
+        // 注册模块
+        this.registerService(new MongoConnector());
+        this.registerService(new StorageEngineConnector());
+        this.registerService(new LogicController());
+        this.registerService(new HttpServer());
     }
 }
 
-//启动程序
-(new CheapDB).start();
+// 启动程序
+(new CheapDB()).start();

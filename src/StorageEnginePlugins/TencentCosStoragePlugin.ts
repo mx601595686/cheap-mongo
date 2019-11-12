@@ -1,8 +1,8 @@
-import * as zlib from 'zlib';
+import zlib from 'zlib';
 import PQueue from 'p-queue';
 const COS = require('cos-nodejs-sdk-v5');
 
-import { BaseStorageEnginePlugin, BaseStorageEngineConnection } from "./BaseStorageEnginePlugin";
+import { IBaseStorageEnginePlugin, IBaseStorageEngineConnection } from './IBaseStorageEnginePlugin';
 
 function gzip(data: zlib.InputType): Promise<Buffer> {
     return new Promise((resolve, reject) => {
@@ -26,22 +26,22 @@ function changeErrorType(err: { error: any }): Error {
         return err.error;
 }
 
-export = class TencentCosStoragePlugin implements BaseStorageEnginePlugin {
+export = class TencentCosStoragePlugin implements IBaseStorageEnginePlugin {
 
-    get name() { return 'cos' }
+    get name(): string { return 'cos' }
 
-    async getConnection(): Promise<BaseStorageEngineConnection> {
-        const pQueue = new PQueue({ interval: 1000, intervalCap: 1000 });    //速度限制。按照腾讯的要求最多每秒1000个请求
-        const enableGzip = (process.env.ENABLE_GZIP || '').toLowerCase() === 'false' ? false : true;    //是否开启gzip压缩，默认true
+    async getConnection(): Promise<IBaseStorageEngineConnection> {
+        const pQueue = new PQueue({ interval: 1000, intervalCap: 1000 }); // 速度限制。按照腾讯的要求最多每秒1000个请求
+        const enableGzip = (process.env.ENABLE_GZIP || '').toLowerCase() !== 'false'; // 是否开启gzip压缩，默认true
         const cos = new COS({
             SecretId: process.env.SECRET_ID,
             SecretKey: process.env.SECRET_KEY,
             FileParallelLimit: 99999,
             ChunkParallelLimit: 99999,
-            ChunkSize: 1024 * 1024 * 10,
+            ChunkSize: 1024 * 1024 * 10
         });
 
-        const connection: BaseStorageEngineConnection = {
+        const connection: IBaseStorageEngineConnection = {
             disconnect() {
                 return pQueue.onIdle();
             },
@@ -60,10 +60,10 @@ export = class TencentCosStoragePlugin implements BaseStorageEnginePlugin {
                         cos.putObject({
                             Bucket: process.env.BUCKET,
                             Region: process.env.REGION,
-                            Key: path.replace(/\//g, '_'),    //腾讯云COS对'/'的处理存在问题
+                            Key: path.replace(/\//g, '_'), // 腾讯云COS对'/'的处理存在问题
                             Body: data,
                             ContentEncoding: enableGzip ? 'gzip' : undefined,
-                            ContentType: 'application/json',
+                            ContentType: 'application/json'
                         }, (err: any) => err ? reject(changeErrorType(err)) : resolve());
                     });
                 });
@@ -73,13 +73,13 @@ export = class TencentCosStoragePlugin implements BaseStorageEnginePlugin {
                     cos.getObject({
                         Bucket: process.env.BUCKET,
                         Region: process.env.REGION,
-                        Key: path.replace(/\//g, '_'),
+                        Key: path.replace(/\//g, '_')
                     }, async function (err: any, data: any) {
                         if (err)
                             reject(changeErrorType(err));
                         else {
                             try {
-                                if (data.headers["content-encoding"] === 'gzip')
+                                if (data.headers['content-encoding'] === 'gzip')
                                     resolve(JSON.parse((await gunzip(data.Body)).toString()));
                                 else
                                     resolve(JSON.parse(data.Body.toString()));
@@ -95,7 +95,7 @@ export = class TencentCosStoragePlugin implements BaseStorageEnginePlugin {
                     cos.deleteObject({
                         Bucket: process.env.BUCKET,
                         Region: process.env.REGION,
-                        Key: path.replace(/\//g, '_'),
+                        Key: path.replace(/\//g, '_')
                     }, (err: any) => err ? reject(changeErrorType(err)) : resolve());
                 }));
             }

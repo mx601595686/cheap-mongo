@@ -1,12 +1,12 @@
-import * as http from 'http';
-import * as koa from 'koa';
-import * as koaBody from 'koa-body';
-import * as koaRouter from 'koa-router';
-import * as HttpError from 'http-errors';
-import * as _ from 'lodash';
-import * as randomString from 'crypto-random-string';
-import { BaseServiceModule } from "service-starter";
+import _ from 'lodash';
 import log from 'log-formatter';
+import http from 'http';
+import koa from 'koa';
+import koaBody from 'koa-body';
+import koaRouter from 'koa-router';
+import HttpError from 'http-errors';
+import randomString from 'crypto-random-string';
+import { BaseServiceModule } from 'service-starter';
 
 import { LogicController } from './LogicController';
 
@@ -15,13 +15,13 @@ export class HttpServer extends BaseServiceModule {
     private _httpServer: http.Server;
     private _logicController: LogicController;
 
-    //用于保存用户访问令牌数据，排在前面的是新令牌，每隔5分钟更新一次令牌，每个令牌最长有效期10分钟
+    // 用于保存用户访问令牌数据，排在前面的是新令牌，每隔5分钟更新一次令牌，每个令牌最长有效期10分钟
     private readonly _tokens: [string, string] = [randomString({ length: 32 }), randomString({ length: 32 })];
     private _updateTokenTimer: NodeJS.Timer;
 
-    //注册路由
+    // 注册路由
     private _registerRoute(notLogged: koaRouter, logged: koaRouter): void {
-        notLogged.post('/login', ctx => {  //登陆获取令牌
+        notLogged.post('/login', ctx => { // 登陆获取令牌
             if (ctx.request.body.password === process.env.PASSWORD) {
                 ctx.body = this._tokens[0];
                 log('数据库登陆：', ctx.request.ip);
@@ -31,11 +31,11 @@ export class HttpServer extends BaseServiceModule {
             }
         });
 
-        logged.post('/updateToken', ctx => {  //更新令牌
+        logged.post('/updateToken', ctx => { // 更新令牌
             ctx.body = this._tokens[0];
         });
 
-        logged.post('/test', ctx => {  //主要是给客户端测试连接使用的
+        logged.post('/test', ctx => { // 主要是给客户端测试连接使用的
             ctx.body = 'cheap-db ok';
         });
 
@@ -47,9 +47,8 @@ export class HttpServer extends BaseServiceModule {
         logged.post('/get', async ctx => {
             if (!ctx.request.body.key) throw new Error('key 不可以为空');
 
-            let aggregation;
             if (ctx.request.body.aggregation) {
-                aggregation = JSON.parse(ctx.request.body.aggregation);
+                var aggregation = JSON.parse(ctx.request.body.aggregation);
                 if (!Array.isArray(aggregation)) throw new Error('aggregation 必须是一个数组');
             }
 
@@ -70,19 +69,19 @@ export class HttpServer extends BaseServiceModule {
         });
 
         logged.post('/syncData', () => {
-            this._logicController._syncData();
+            this._logicController.syncData().catch(console.error);
         });
 
         logged.post('/migrate', ctx => {
             if (!ctx.request.body.remoteMongo) throw new Error('remoteMongo 不可以为空');
             const migrateAll = (ctx.request.body.migrateAll || '').toLowerCase() === 'true';
-            this._logicController.migrate(ctx.request.body.remoteMongo, migrateAll);
+            this._logicController.migrate(ctx.request.body.remoteMongo, migrateAll).catch(console.error);
         });
     }
 
     onStart(): Promise<void> {
         return new Promise(resolve => {
-            this._logicController = this.services.LogicController;
+            this._logicController = this.services.LogicController as any;
 
             if (!process.env.PASSWORD)
                 throw new Error('没有设置数据库密码 [环境变量 PASSWORD]');
@@ -100,11 +99,11 @@ export class HttpServer extends BaseServiceModule {
 
             koaServer.use(koaBody({
                 json: false,
-                jsonLimit: 1, //不能设置为0，否则无效
+                jsonLimit: 1, // 不能设置为0，否则无效
                 text: false,
                 textLimit: 1,
                 formLimit: '17mb',
-                multipart: false,
+                multipart: false
             }));
 
             koaServer.use(async (ctx, next) => {
@@ -113,7 +112,7 @@ export class HttpServer extends BaseServiceModule {
                         await next();
                         if (ctx.body === undefined) ctx.body = 'ok';
                     } else
-                        ctx.status = 405;   //Method Not Allowd
+                        ctx.status = 405; // Method Not Allowd
                 } catch (err) {
                     ctx.status = err.statusCode || err.status || 400;
                     ctx.body = err.message;
@@ -136,7 +135,7 @@ export class HttpServer extends BaseServiceModule {
         return new Promise((resolve, reject) => {
             clearInterval(this._updateTokenTimer);
             this._httpServer.close(e => e ? reject(e) : resolve());
-            setTimeout(resolve, 5000);  //最多等待5秒
+            setTimeout(resolve, 5000); // 最多等待5秒
         });
     }
 }
