@@ -11,6 +11,7 @@ COPY ["package.json", "gulpfile.js", "tsconfig.json", "LICENSE", "/app/"]
 
 # 编译
 RUN npm install && \ 
+    npm run lint && \
     npm run compile && \
     # 清除devDependencies包
     npm prune --production && \
