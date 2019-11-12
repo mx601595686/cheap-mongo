@@ -1,6 +1,8 @@
 # cheap-db
 一款低性能数据库，目的是降低数据库存储成本将数据保存在S3等廉价存储介质之上
 
+> sudo docker pull registry.cn-hangzhou.aliyuncs.com/wujingtao/cheap-db:[发布版本号]
+
 ### 环境变量
 * `TZ`：时区，默认 `Asia/Shanghai` (上海)
 * `CACHE_SYNC_CRONTAB`：缓存数据同步时间间隔，默认 `*/10 * * * *` (每隔10分钟)
