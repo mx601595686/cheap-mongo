@@ -3,5 +3,6 @@
 !gulpfile.js
 !package.json
 !tsconfig.json
+!.eslintrc.json
 !mongod.conf
 !LICENSE

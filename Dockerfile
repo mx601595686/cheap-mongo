@@ -7,7 +7,7 @@ WORKDIR /app
 
 # 复制代码
 COPY ["src", "/app/src/"]
-COPY ["package.json", "gulpfile.js", "tsconfig.json", "LICENSE", "/app/"]
+COPY ["package.json", "gulpfile.js", "tsconfig.json", ".eslintrc.json", "LICENSE", "/app/"]
 
 # 编译
 RUN npm install && \ 
@@ -16,7 +16,7 @@ RUN npm install && \
     # 清除devDependencies包
     npm prune --production && \
     # 删除多余文件
-    rm -r src gulpfile.js tsconfig.json && \
+    rm -r src gulpfile.js tsconfig.json .eslintrc.json && \
     # 确保程序代码不会被破坏
     chmod 755 /app && \
     # 确保可执行
