@@ -13,13 +13,13 @@ COPY ["package.json", "gulpfile.js", "tsconfig.json", ".eslintrc.json", "LICENSE
 RUN npm install && \ 
     npm run lint && \
     npm run compile && \
-    # 清除devDependencies包
+# 清除devDependencies包
     npm prune --production && \
-    # 删除多余文件
+# 删除多余文件
     rm -r src gulpfile.js tsconfig.json .eslintrc.json && \
-    # 确保程序代码不会被破坏
+# 确保程序代码不会被破坏
     chmod 755 /app && \
-    # 确保可执行
+# 确保可执行
     chmod 755 node_modules/service-starter/src/Docker/health_check.sh
 
 FROM mongo:4.0
