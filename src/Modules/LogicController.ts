@@ -41,7 +41,7 @@ export class LogicController extends BaseServiceModule {
             this._maxCacheSize = Math.trunc(status.fsTotalSize * 0.8);
         }
 
-        this._cleanTimer = setInterval(this.cleanCache.bind(this), 0.5 * 60 * 1000);
+        this._cleanTimer = setInterval(this.cleanCache.bind(this), 1 * 60 * 1000);
     }
 
     onStop(): Promise<void> {
@@ -62,12 +62,9 @@ export class LogicController extends BaseServiceModule {
                 if (status.dataSize + status.indexSize > this._maxCacheSize) {
                     // log.text.cyan('开始清理缓存');
                     
-                    let deleteLimit = Math.trunc(this._maxCacheSize * 0.1 / status.avgObjSize / 2); // 估算一下大约要删掉多少个文档。除2是为了避免没有data文档所造成的偏差
-                    deleteLimit = Math.min(deleteLimit, Math.trunc(33554432 * 0.5 / status.avgObjSize / 2)); // 由于Mongo最大排序内存只支持32MB
-                    
                     const deleteItems = await this._mongoCollection.find({ syncType: null, hasData: true }, {
                         sort: { updateTime: 1 },
-                        limit: deleteLimit,
+                        limit: Math.trunc(this._maxCacheSize * 0.1 / status.avgObjSize / 2), // 估算一下大约要删掉多少个文档。除2是为了避免没有data文档所造成的偏差
                         projection: { _id: 1 }
                     }).toArray();
 

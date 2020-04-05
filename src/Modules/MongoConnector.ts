@@ -62,7 +62,7 @@ export class MongoConnector extends BaseServiceModule {
                 validationLevel: 'strict'
             });
 
-            await this._mongoCollection.createIndex({ syncType: 1 }, { background: true });
+            await this._mongoCollection.createIndex({ syncType: 1, hasData: -1, updateTime: 1 }, { background: true });
         } else
             this._mongoCollection = this._mongoDb.collection('cache');
     }
