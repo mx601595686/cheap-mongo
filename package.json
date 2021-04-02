@@ -12,12 +12,12 @@
     "license": "MIT",
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/mx601595686/cheap-db.git"
+        "url": "git+https://github.com/wu-jingtao/cheap-db.git"
     },
     "bugs": {
-        "url": "https://github.com/mx601595686/cheap-db/issues"
+        "url": "https://github.com/wu-jingtao/cheap-db/issues"
     },
-    "homepage": "https://github.com/mx601595686/cheap-db#readme",
+    "homepage": "https://github.com/wu-jingtao/cheap-db#readme",
     "devDependencies": {
         "@types/component-emitter": "1.2.8",
         "@types/fs-extra": "8.0.1",
